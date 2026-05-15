@@ -3,6 +3,8 @@ dist/
 dist-electron/
 .electron-data/
 .codex/
+.kiro/
+.vscode/
 
 calendar.db
 calendar.db-shm
