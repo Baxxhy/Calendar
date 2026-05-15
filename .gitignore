@@ -1,0 +1,16 @@
+node_modules/
+dist/
+dist-electron/
+.electron-data/
+.codex/
+
+calendar.db
+calendar.db-shm
+calendar.db-wal
+
+*.log
+*.tmp
+*.cache
+
+.DS_Store
+Thumbs.db

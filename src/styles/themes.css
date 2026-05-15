@@ -1,0 +1,66 @@
+/* themes.css - 主题颜色定义（第五阶段扩展用，当前只用默认蓝） */
+
+/* 清新蓝（默认） */
+[data-theme="blue"] {
+  --primary: #0078d4;
+  --primary-light: #e8f4fd;
+  --primary-dark: #005a9e;
+}
+
+/* 薄荷绿 */
+[data-theme="green"] {
+  --primary: #107c10;
+  --primary-light: #e6f4e6;
+  --primary-dark: #0a5c0a;
+}
+
+/* 樱花粉 */
+[data-theme="pink"] {
+  --primary: #e3008c;
+  --primary-light: #fce8f4;
+  --primary-dark: #b3006e;
+}
+
+/* 暖橙色 */
+[data-theme="orange"] {
+  --primary: #d83b01;
+  --primary-light: #fdf0eb;
+  --primary-dark: #a82d01;
+}
+
+/* 紫色 */
+[data-theme="purple"] {
+  --primary: #8764b8;
+  --primary-light: #f0ebf8;
+  --primary-dark: #6b4f9a;
+}
+
+[data-mode="light"] {
+  --bg-app: #f3f3f3;
+  --bg-surface: #ffffff;
+  --bg-hover: #f5f8ff;
+  --bg-active: #e8e8e8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --text-on-primary: #ffffff;
+  --border: #e0e0e0;
+  --border-light: #e8e8e8;
+}
+
+[data-mode="dark"] {
+  --bg-app: #111318;
+  --bg-surface: #1b1f27;
+  --bg-hover: #252b36;
+  --bg-active: #303746;
+  --text-primary: #f3f6fb;
+  --text-secondary: #c7cfdd;
+  --text-muted: #8e98aa;
+  --text-on-primary: #ffffff;
+  --border: #343b49;
+  --border-light: #29303c;
+  --primary-light: rgba(0, 120, 212, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
