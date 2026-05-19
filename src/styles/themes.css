@@ -36,16 +36,16 @@
 }
 
 [data-mode="light"] {
-  --bg-app: #f3f3f3;
+  --bg-app: #f6f7fb;
   --bg-surface: #ffffff;
-  --bg-hover: #f5f8ff;
+  --bg-hover: #eef5ff;
   --bg-active: #e8e8e8;
   --text-primary: #1a1a1a;
   --text-secondary: #666666;
   --text-muted: #999999;
   --text-on-primary: #ffffff;
-  --border: #e0e0e0;
-  --border-light: #e8e8e8;
+  --border: #d9e1ec;
+  --border-light: #e8edf5;
 }
 
 [data-mode="dark"] {

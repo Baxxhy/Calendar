@@ -102,11 +102,12 @@ defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-w
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 10px 18px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  height: 56px;
+  height: 60px;
   flex-shrink: 0;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
 }
 
 /* 左侧导航区 */
@@ -118,19 +119,19 @@ defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-w
 
 /* 今天按钮 */
 .btn-today {
-  padding: 5px 14px;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-primary);
+  padding: 7px 15px;
+  border-radius: 8px;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: var(--text-on-primary);
   font-size: 13px;
   font-weight: 500;
   transition: background var(--transition), border-color var(--transition);
 }
 .btn-today:hover {
-  background: var(--bg-hover);
-  border-color: var(--primary);
-  color: var(--primary);
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: var(--text-on-primary);
 }
 
 /* 上一月/下一月箭头 */
@@ -139,9 +140,9 @@ defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-w
   gap: 2px;
 }
 .btn-arrow {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
   font-size: 20px;
@@ -158,11 +159,11 @@ defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-w
 
 /* 年月标题 */
 .month-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   color: var(--text-primary);
   margin-left: 4px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
 }
 
 /* 右侧工具区 */
@@ -176,13 +177,14 @@ defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-w
 .view-switcher {
   display: flex;
   background: var(--bg-app);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
   padding: 3px;
   gap: 2px;
 }
 .btn-view {
-  padding: 4px 12px;
-  border-radius: 6px;
+  padding: 6px 13px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
   font-size: 13px;
@@ -210,9 +212,9 @@ defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-w
 
 /* 图标按钮（设置、小组件） */
 .btn-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
   font-size: 16px;

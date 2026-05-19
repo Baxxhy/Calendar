@@ -1,3 +1,5 @@
+import { isValidTimeRange, normalizeTime } from '../utils/todoTime.js'
+
 /**
  * todoService.js - Todo 数据服务层
  * 
@@ -31,9 +33,16 @@ export async function addTodo(todo) {
   if (!todo.date) {
     throw new Error('日期不能为空')
   }
+  const startTime = normalizeTime(todo.start_time)
+  const endTime = normalizeTime(todo.end_time)
+  if (!isValidTimeRange(startTime, endTime)) {
+    throw new Error('开始时间不能晚于结束时间')
+  }
   return await window.electronAPI.addTodo({
     ...todo,
-    title: todo.title.trim()
+    title: todo.title.trim(),
+    start_time: startTime,
+    end_time: endTime
   })
 }
 
@@ -44,9 +53,16 @@ export async function addTodo(todo) {
 export async function updateTodo(todo) {
   if (!todo.id) throw new Error('缺少 Todo ID')
   if (!todo.title || !todo.title.trim()) throw new Error('标题不能为空')
+  const startTime = normalizeTime(todo.start_time)
+  const endTime = normalizeTime(todo.end_time)
+  if (!isValidTimeRange(startTime, endTime)) {
+    throw new Error('开始时间不能晚于结束时间')
+  }
   return await window.electronAPI.updateTodo({
     ...todo,
-    title: todo.title.trim()
+    title: todo.title.trim(),
+    start_time: startTime,
+    end_time: endTime
   })
 }
 

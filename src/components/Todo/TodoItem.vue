@@ -1,22 +1,29 @@
 <template>
-  <div class="todo-item" :class="{ completed: todo.completed }">
+  <div
+    class="todo-item"
+    :class="{ completed: todo.completed }"
+    @dblclick="$emit('open', todo)"
+  >
     <!-- 完成复选框 -->
     <button
       class="checkbox"
       :class="{ checked: todo.completed }"
       @click="$emit('toggle', todo.id)"
+      @dblclick.stop
       :title="todo.completed ? '标记为未完成' : '标记为完成'"
     >
       <span v-if="todo.completed" class="check-icon">✓</span>
     </button>
 
     <!-- Todo 标题 -->
-    <span class="todo-title">{{ todo.title }}</span>
+    <span v-if="timeRange" class="todo-time">{{ timeRange }}</span>
+    <span class="todo-title" :title="displayTitle">{{ todo.title }}</span>
 
     <!-- 删除按钮 -->
     <button
       class="btn-delete"
       @click="onDelete"
+      @dblclick.stop
       title="删除"
     >
       ✕
@@ -35,6 +42,9 @@
  *   toggle (id) - 切换完成状态
  *   delete (id) - 删除（已在内部确认）
  */
+import { computed } from 'vue'
+import { formatTimeRange } from '../../utils/todoTime.js'
+
 const props = defineProps({
   todo: {
     type: Object,
@@ -42,7 +52,12 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['toggle', 'delete'])
+const emit = defineEmits(['toggle', 'delete', 'open'])
+
+const timeRange = computed(() => formatTimeRange(props.todo))
+const displayTitle = computed(() =>
+  timeRange.value ? `${timeRange.value} ${props.todo.title}` : props.todo.title
+)
 
 function onDelete() {
   // 删除前确认
@@ -57,10 +72,9 @@ function onDelete() {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  transition: background var(--transition);
-  group: true;
+  padding: 8px 11px;
+  border-radius: 8px;
+  transition: background var(--transition), transform var(--transition);
 }
 .todo-item:hover {
   background: var(--bg-hover);
@@ -83,11 +97,12 @@ function onDelete() {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color var(--transition), background var(--transition);
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
   padding: 0;
 }
 .checkbox:hover {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 .checkbox.checked {
   background: var(--primary);
@@ -107,6 +122,16 @@ function onDelete() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.todo-time {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: var(--bg-app);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* 删除按钮：默认隐藏，hover 时显示 */

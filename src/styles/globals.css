@@ -6,9 +6,9 @@
   --primary-light: #e8f4fd;
   --primary-dark: #005a9e;
 
-  --bg-app: #f3f3f3;
+  --bg-app: #f6f7fb;
   --bg-surface: #ffffff;
-  --bg-hover: #f5f8ff;
+  --bg-hover: #eef5ff;
   --bg-active: #e8e8e8;
 
   --text-primary: #1a1a1a;
@@ -16,12 +16,12 @@
   --text-muted: #999999;
   --text-on-primary: #ffffff;
 
-  --border: #e0e0e0;
-  --border-light: #e8e8e8;
+  --border: #d9e1ec;
+  --border-light: #e8edf5;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 18px 48px rgba(15, 23, 42, 0.16);
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -52,6 +52,7 @@ body {
   color: var(--text-primary);
   background: var(--bg-app);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   user-select: none;
 }
 
@@ -82,6 +83,11 @@ button {
   outline: none;
   font-family: inherit;
   font-size: 13px;
+}
+
+button,
+input {
+  color: inherit;
 }
 
 button:focus-visible {

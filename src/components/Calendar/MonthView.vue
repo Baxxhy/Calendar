@@ -30,7 +30,7 @@
 <script setup>
 import { computed } from 'vue'
 import DayCell from './DayCell.vue'
-import { getCalendarDays } from '../../utils/dateUtils.js'
+import { getCalendarDays, today } from '../../utils/dateUtils.js'
 
 /**
  * MonthView.vue - 月视图日历网格
@@ -45,6 +45,7 @@ const props = defineProps({
   year: { type: Number, required: true },
   month: { type: Number, required: true },
   selectedDate: { type: String, default: '' },
+  todayDate: { type: String, default: today },
   allTodosByDate: { type: Object, default: () => ({}) }
 })
 
@@ -55,7 +56,7 @@ const weekdays = ['一', '二', '三', '四', '五', '六', '日']
 
 // 计算当前月的所有日期格子
 const calendarDays = computed(() =>
-  getCalendarDays(props.year, props.month)
+  getCalendarDays(props.year, props.month, props.todayDate)
 )
 
 function onSelectDate(dateStr) {

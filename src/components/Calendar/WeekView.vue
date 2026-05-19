@@ -48,10 +48,11 @@
             class="week-todo-chip"
             :class="{ 'todo-done': todo.completed }"
             :style="chipStyle(todo)"
-            :title="todo.title"
+            :title="displayTitle(todo)"
             @click.stop="$emit('select-date', day.dateStr)"
           >
             <span class="chip-dot" :style="{ background: dotColor(todo) }"></span>
+            <span v-if="formatTimeRange(todo)" class="chip-time">{{ formatTimeRange(todo) }}</span>
             <span class="chip-text">{{ todo.title }}</span>
           </div>
         </div>
@@ -71,10 +72,12 @@
 <script setup>
 import { computed } from 'vue'
 import { formatDate, today } from '../../utils/dateUtils.js'
+import { formatTimeRange } from '../../utils/todoTime.js'
 
 const props = defineProps({
   // 当前选中日期，用于定位到所在周
   selectedDate: { type: String, default: '' },
+  todayDate: { type: String, default: today },
   // 全部 todo，按日期分组 { 'YYYY-MM-DD': Todo[] }
   allTodosByDate: { type: Object, default: () => ({}) }
 })
@@ -82,7 +85,6 @@ const props = defineProps({
 defineEmits(['select-date', 'add-todo'])
 
 const weekLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-const todayStr = today()
 
 // 根据 selectedDate 计算本周周一到周日
 const weekDays = computed(() => {
@@ -104,7 +106,7 @@ const weekDays = computed(() => {
       dateStr,
       dayNum: d.getDate(),
       weekLabel: weekLabels[i],
-      isToday: dateStr === todayStr,
+      isToday: dateStr === props.todayDate,
       isWeekend: i >= 5 // 周六、周日
     }
   })
@@ -132,6 +134,11 @@ function dotColor(todo) {
   if (todo.completed) return '#bbbbbb'
   const c = colorMap[todo.color] || colorMap.blue
   return c.dot
+}
+
+function displayTitle(todo) {
+  const time = formatTimeRange(todo)
+  return time ? `${time} ${todo.title}` : todo.title
 }
 </script>
 
@@ -281,6 +288,12 @@ function dotColor(todo) {
   white-space: nowrap;
   flex: 1;
   min-width: 0;
+}
+
+.chip-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* 空状态提示 */

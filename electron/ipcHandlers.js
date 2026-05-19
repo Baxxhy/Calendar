@@ -8,7 +8,7 @@ function registerIpcHandlers() {
   ipcMain.handle('todos:getByDate', (event, date) => {
     try {
       const db = getDb()
-      return db.prepare('SELECT * FROM todos WHERE date = ? ORDER BY created_at ASC').all(date)
+      return db.prepare("SELECT * FROM todos WHERE date = ? ORDER BY COALESCE(start_time, ''), created_at ASC").all(date)
     } catch (err) {
       console.error('todos:getByDate error:', err)
       throw err
@@ -19,7 +19,7 @@ function registerIpcHandlers() {
   ipcMain.handle('todos:getAll', () => {
     try {
       const db = getDb()
-      return db.prepare('SELECT * FROM todos ORDER BY date DESC, created_at ASC').all()
+      return db.prepare("SELECT * FROM todos ORDER BY date DESC, COALESCE(start_time, ''), created_at ASC").all()
     } catch (err) {
       console.error('todos:getAll error:', err)
       throw err
@@ -34,9 +34,9 @@ function registerIpcHandlers() {
       const id = uuidv4()
 
       db.prepare(`
-        INSERT INTO todos (id, title, description, date, completed, priority, color, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?)
-      `).run(id, todo.title, todo.description || null, todo.date, todo.priority || 'medium', todo.color || null, now, now)
+        INSERT INTO todos (id, title, description, date, start_time, end_time, completed, priority, color, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+      `).run(id, todo.title, todo.description || null, todo.date, todo.start_time || null, todo.end_time || null, todo.priority || 'medium', todo.color || null, now, now)
 
       return db.prepare('SELECT * FROM todos WHERE id = ?').get(id)
     } catch (err) {
@@ -52,8 +52,8 @@ function registerIpcHandlers() {
       const now = new Date().toISOString()
 
       db.prepare(`
-        UPDATE todos SET title=?, description=?, date=?, priority=?, color=?, updated_at=? WHERE id=?
-      `).run(todo.title, todo.description || null, todo.date, todo.priority || 'medium', todo.color || null, now, todo.id)
+        UPDATE todos SET title=?, description=?, date=?, start_time=?, end_time=?, priority=?, color=?, updated_at=? WHERE id=?
+      `).run(todo.title, todo.description || null, todo.date, todo.start_time || null, todo.end_time || null, todo.priority || 'medium', todo.color || null, now, todo.id)
 
       return db.prepare('SELECT * FROM todos WHERE id = ?').get(todo.id)
     } catch (err) {

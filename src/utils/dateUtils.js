@@ -15,11 +15,36 @@ export function formatDate(date) {
   return `${y}-${m}-${d}`
 }
 
+const CHINA_TIME_OFFSET_MINUTES = 8 * 60
+const MS_PER_MINUTE = 60 * 1000
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+function formatDateParts(year, month, day) {
+  const m = String(month).padStart(2, '0')
+  const d = String(day).padStart(2, '0')
+  return `${year}-${m}-${d}`
+}
+
+function parseDateStr(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return { year, month, day }
+}
+
+export function chinaDateParts(date = new Date()) {
+  const chinaTime = new Date(date.getTime() + CHINA_TIME_OFFSET_MINUTES * MS_PER_MINUTE)
+  return {
+    year: chinaTime.getUTCFullYear(),
+    month: chinaTime.getUTCMonth(),
+    day: chinaTime.getUTCDate()
+  }
+}
+
 /**
  * 获取今天的日期字符串 'YYYY-MM-DD'
  */
 export function today() {
-  return formatDate(new Date())
+  const { year, month, day } = chinaDateParts()
+  return formatDateParts(year, month + 1, day)
 }
 
 /**
@@ -30,9 +55,8 @@ export function today() {
  * @param {number} month - 月份（0-11，JavaScript 标准）
  * @returns {Array} 日期对象数组，每个对象包含 { date, dateStr, isCurrentMonth, isToday }
  */
-export function getCalendarDays(year, month) {
+export function getCalendarDays(year, month, todayStr = today()) {
   const days = []
-  const todayStr = today()
 
   // 当月第一天
   const firstDay = new Date(year, month, 1)
@@ -107,9 +131,10 @@ export function nextMonth(year, month) {
 }
 
 export function addDays(dateStr, days) {
-  const date = new Date(dateStr + 'T00:00:00')
-  date.setDate(date.getDate() + days)
-  return formatDate(date)
+  const date = parseDateStr(dateStr)
+  const utcTime = Date.UTC(date.year, date.month - 1, date.day) + days * MS_PER_DAY
+  const next = new Date(utcTime)
+  return formatDateParts(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate())
 }
 
 export function getWeekRangeTitle(dateStr) {

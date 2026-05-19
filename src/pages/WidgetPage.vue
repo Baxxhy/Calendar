@@ -67,6 +67,7 @@
           :year="currentYear"
           :month="currentMonth"
           :selected-date="selectedDate"
+          :today-date="currentToday"
           :all-todos-by-date="allTodosByDate"
           @select-date="onSelectDate"
           @add-todo="onOpenAddModal"
@@ -106,20 +107,22 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import MonthView from '../components/Calendar/MonthView.vue'
 import TodoList from '../components/Todo/TodoList.vue'
 import TodoEditorModal from '../components/Todo/TodoEditorModal.vue'
-import { getMonthTitle, nextMonth, prevMonth, today } from '../utils/dateUtils.js'
+import { chinaDateParts, getMonthTitle, nextMonth, prevMonth, today } from '../utils/dateUtils.js'
+import { buildWeeklyRepeatDates } from '../utils/recurrence.js'
 import { addTodo, deleteTodo, getAllTodos, getTodosByDate, toggleTodo } from '../services/todoService.js'
 
 const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
 const mode = ref(params.get('mode') === 'list' ? 'list' : 'calendar')
 
-const now = new Date()
-const currentYear = ref(now.getFullYear())
-const currentMonth = ref(now.getMonth())
+const now = chinaDateParts()
+const currentYear = ref(now.year)
+const currentMonth = ref(now.month)
 const selectedDate = ref(today())
+const currentToday = ref(selectedDate.value)
 const todos = ref([])
 const loading = ref(false)
 const allTodosByDate = ref({})
@@ -128,15 +131,29 @@ const modalDate = ref('')
 const pinned = ref(localStorage.getItem('widget-pinned') === 'true')
 const widgetOpacity = ref(localStorage.getItem('widget-opacity') || '0.82')
 const showDetail = ref(localStorage.getItem('widget-show-detail') !== 'false')
+let todayTimer = null
+let removeThemeModeListener = null
 
 const title = computed(() => getMonthTitle(currentYear.value, currentMonth.value))
 
 function applyStoredTheme() {
   const themeMode = localStorage.getItem('theme-mode') || 'light'
+  applyThemeMode(themeMode)
+}
+
+function applyThemeMode(themeMode) {
   document.documentElement.dataset.mode = themeMode
   document.body.dataset.mode = themeMode
   document.documentElement.style.background = 'transparent'
   document.body.style.background = 'transparent'
+}
+
+function refreshCurrentToday() {
+  const nextToday = today()
+  if (currentToday.value !== nextToday) {
+    currentToday.value = nextToday
+  }
+  return nextToday
 }
 
 async function loadAllTodos() {
@@ -179,10 +196,10 @@ function onNextMonth() {
 }
 
 function onGoToday() {
-  const date = new Date()
-  currentYear.value = date.getFullYear()
-  currentMonth.value = date.getMonth()
-  selectedDate.value = today()
+  const date = chinaDateParts()
+  currentYear.value = date.year
+  currentMonth.value = date.month
+  selectedDate.value = refreshCurrentToday()
 }
 
 function onOpenAddModal(dateStr) {
@@ -191,11 +208,19 @@ function onOpenAddModal(dateStr) {
 }
 
 async function onSaveTodo(todoData) {
-  await addTodo(todoData)
+  const repeatDates = buildWeeklyRepeatDates(todoData.recurrence)
+  const dates = repeatDates.length > 0 ? repeatDates : [todoData.date]
+  for (const date of dates) {
+    await addTodo({
+      ...todoData,
+      date,
+      recurrence: undefined
+    })
+  }
   showAddModal.value = false
   await loadAllTodos()
-  if (todoData.date !== selectedDate.value) {
-    onSelectDate(todoData.date)
+  if (dates[0] !== selectedDate.value) {
+    onSelectDate(dates[0])
   } else {
     await loadTodos(selectedDate.value)
   }
@@ -231,7 +256,18 @@ watch(showDetail, value => {
 
 onMounted(() => {
   applyStoredTheme()
+  removeThemeModeListener = window.electronAPI?.onThemeModeChanged?.((mode) => {
+    localStorage.setItem('theme-mode', mode)
+    applyThemeMode(mode)
+  }) || null
+  refreshCurrentToday()
+  todayTimer = setInterval(refreshCurrentToday, 60 * 1000)
   loadAllTodos()
+})
+
+onUnmounted(() => {
+  removeThemeModeListener?.()
+  clearInterval(todayTimer)
 })
 </script>
 

@@ -1,64 +1,81 @@
 <template>
   <div class="todo-list">
-    <!-- 标题栏 -->
     <div class="list-header">
-      <span class="list-title">
-        {{ selectedDate ? formatDisplayDate(selectedDate) : '请选择日期' }}
-      </span>
-      <span v-if="todos.length > 0" class="todo-count">
-        {{ uncompletedCount }}/{{ todos.length }}
-      </span>
+      <div class="list-title-group">
+        <span class="list-title">
+          {{ selectedDate ? formatDisplayDate(selectedDate) : '请选择日期' }}
+        </span>
+        <span v-if="todos.length > 0" class="todo-count">
+          {{ uncompletedCount }}/{{ todos.length }}
+        </span>
+      </div>
+      <button
+        v-if="todos.length > 0"
+        class="filter-btn"
+        :class="{ active: hideCompleted }"
+        title="只看未完成"
+        @click="hideCompleted = !hideCompleted"
+      >
+        未完成
+      </button>
     </div>
 
-    <!-- 加载中 -->
     <div v-if="loading" class="state-loading">
       <span>加载中...</span>
     </div>
 
-    <!-- 空状态 -->
     <div v-else-if="todos.length === 0 && selectedDate" class="state-empty">
-      <div class="empty-icon">📋</div>
+      <div class="empty-icon">□</div>
       <p>今天还没有待办</p>
       <p class="empty-hint">双击日历中的日期来添加</p>
     </div>
 
-    <!-- Todo 列表 -->
     <div v-else class="list-body">
       <TodoItem
-        v-for="todo in todos"
+        v-for="todo in visibleTodos"
         :key="todo.id"
         :todo="todo"
         @toggle="$emit('toggle', $event)"
         @delete="$emit('delete', $event)"
+        @open="openTodoDetail"
       />
+      <div v-if="visibleTodos.length === 0" class="state-filter-empty">
+        已完成的都藏起来了
+      </div>
     </div>
 
-    <!-- 底部快速添加按钮 -->
     <div v-if="selectedDate" class="list-footer">
       <button class="btn-add" @click="$emit('add', selectedDate)">
         + 添加待办
       </button>
     </div>
+
+    <div
+      v-if="detailTodo"
+      class="detail-overlay"
+      @click.self="closeTodoDetail"
+    >
+      <div class="detail-dialog">
+        <div class="detail-dialog-header">
+          <span>待办详情</span>
+          <button class="detail-close" title="关闭" @click="closeTodoDetail">×</button>
+        </div>
+        <div v-if="detailTime" class="detail-time">
+          {{ detailTime }}
+        </div>
+        <div class="detail-content">
+          {{ detailTodo.title }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import TodoItem from './TodoItem.vue'
+import { formatTimeRange } from '../../utils/todoTime.js'
 
-/**
- * TodoList.vue - 侧边栏 Todo 列表
- *
- * Props:
- *   todos        {Array}  - Todo 数组
- *   selectedDate {string} - 当前选中日期
- *   loading      {boolean}
- *
- * Emits:
- *   toggle (id)       - 切换完成状态
- *   delete (id)       - 删除
- *   add    (dateStr)  - 添加新 Todo
- */
 const props = defineProps({
   todos: { type: Array, default: () => [] },
   selectedDate: { type: String, default: '' },
@@ -67,13 +84,29 @@ const props = defineProps({
 
 defineEmits(['toggle', 'delete', 'add'])
 
+const detailTodo = ref(null)
+const hideCompleted = ref(false)
+
 const uncompletedCount = computed(() =>
   props.todos.filter(t => !t.completed).length
 )
 
-// 将 'YYYY-MM-DD' 格式化为 'M月D日（周X）'
+const visibleTodos = computed(() =>
+  hideCompleted.value ? props.todos.filter(t => !t.completed) : props.todos
+)
+
+const detailTime = computed(() => formatTimeRange(detailTodo.value))
+
+function openTodoDetail(todo) {
+  detailTodo.value = todo
+}
+
+function closeTodoDetail() {
+  detailTodo.value = null
+}
+
 function formatDisplayDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00') // 加时间避免时区偏移
+  const d = new Date(dateStr + 'T00:00:00')
   const weekdays = ['日', '一', '二', '三', '四', '五', '六']
   return `${d.getMonth() + 1}月${d.getDate()}日（周${weekdays[d.getDay()]}）`
 }
@@ -81,6 +114,7 @@ function formatDisplayDate(dateStr) {
 
 <style scoped>
 .todo-list {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -88,86 +122,195 @@ function formatDisplayDate(dateStr) {
   border-left: 1px solid var(--border);
 }
 
-/* 标题栏 */
 .list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding: 16px 16px 12px;
   border-bottom: 1px solid var(--border-light);
 }
+
+.list-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .list-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 .todo-count {
+  flex-shrink: 0;
   font-size: 12px;
   color: var(--text-muted);
   background: var(--bg-app);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
 }
 
-/* 加载状态 */
-.state-loading {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 13px;
+.filter-btn {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
-/* 空状态 */
+.filter-btn:hover,
+.filter-btn.active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.state-loading,
 .state-empty {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   color: var(--text-muted);
+}
+
+.state-loading {
+  font-size: 13px;
+}
+
+.state-empty {
+  flex-direction: column;
+  gap: 8px;
   padding: 20px;
   text-align: center;
 }
+
 .empty-icon {
-  font-size: 32px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 18px;
   margin-bottom: 4px;
 }
+
 .state-empty p {
   font-size: 13px;
 }
-.empty-hint {
+
+.empty-hint,
+.state-filter-empty {
   font-size: 12px;
   color: var(--text-muted);
 }
 
-/* 列表主体 */
+.state-filter-empty {
+  padding: 28px 12px;
+  text-align: center;
+}
+
 .list-body {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 4px;
+  padding: 8px 5px;
 }
 
-/* 底部添加按钮 */
 .list-footer {
   padding: 12px 16px;
   border-top: 1px solid var(--border-light);
 }
+
 .btn-add {
   width: 100%;
-  padding: 8px;
-  border-radius: var(--radius-sm);
+  padding: 9px;
+  border-radius: 8px;
   background: transparent;
   border: 1px dashed var(--border);
   color: var(--text-secondary);
   font-size: 13px;
   transition: all var(--transition);
 }
+
 .btn-add:hover {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--primary-light);
+}
+
+.detail-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.detail-dialog {
+  width: min(420px, 100%);
+  max-height: min(70vh, 520px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.detail-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.detail-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.detail-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.detail-time {
+  padding: 12px 14px 0;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.detail-content {
+  padding: 14px;
+  overflow: auto;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 </style>

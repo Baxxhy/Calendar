@@ -139,6 +139,15 @@ ipcMain.handle('widget:open', (event, mode) => {
   createWidgetWindow(mode === 'list' ? 'list' : 'calendar')
 })
 
+ipcMain.on('theme:set-mode', (event, mode) => {
+  if (!['light', 'dark'].includes(mode)) return
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (window.webContents !== event.sender && !window.isDestroyed()) {
+      window.webContents.send('theme:mode-changed', mode)
+    }
+  }
+})
+
 ipcMain.on('window:close-current', (event) => {
   const window = BrowserWindow.fromWebContents(event.sender)
   if (window) {

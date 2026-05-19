@@ -22,9 +22,10 @@
         class="todo-chip"
         :class="{ 'todo-done': todo.completed }"
         :style="chipStyle(todo)"
-        :title="todo.title"
+        :title="displayTitle(todo)"
       >
         <span class="todo-chip-dot" :style="{ background: dotColor(todo) }"></span>
+        <span v-if="formatTimeRange(todo)" class="todo-chip-time">{{ formatTimeRange(todo) }}</span>
         <span class="todo-chip-text">{{ todo.title }}</span>
       </div>
       <!-- 超出3条显示 +N -->
@@ -37,6 +38,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { formatTimeRange } from '../../utils/todoTime.js'
 
 /**
  * DayCell.vue - 月视图中的单个日期格子
@@ -90,6 +92,11 @@ function dotColor(todo) {
   const c = colorMap[todo.color] || colorMap.blue
   return c.dot
 }
+
+function displayTitle(todo) {
+  const time = formatTimeRange(todo)
+  return time ? `${time} ${todo.title}` : todo.title
+}
 </script>
 
 <style scoped>
@@ -98,11 +105,11 @@ function dotColor(todo) {
   height: 100%;
   min-height: 90px;
   overflow: hidden;
-  padding: 6px 6px 4px;
+  padding: 7px 7px 5px;
   border-right: 1px solid var(--border-light);
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
-  transition: background 0.12s ease;
+  transition: background 0.12s ease, box-shadow 0.12s ease;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -112,6 +119,7 @@ function dotColor(todo) {
 
 .day-cell:hover {
   background: var(--bg-hover);
+  box-shadow: inset 0 0 0 1px rgba(0, 120, 212, 0.1);
 }
 
 /* 非当前月：背景和文字都弱化 */
@@ -138,6 +146,7 @@ function dotColor(todo) {
 /* 选中：浅蓝背景 */
 .day-cell.is-selected {
   background: var(--primary-light);
+  box-shadow: inset 0 0 0 2px rgba(0, 120, 212, 0.22);
 }
 .day-cell.is-selected .day-number {
   color: var(--primary);
@@ -175,8 +184,8 @@ function dotColor(todo) {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 5px;
-  border-radius: 3px;
+  padding: 3px 6px;
+  border-radius: 5px;
   background: #dbeafe; /* 默认蓝色，会被内联样式覆盖 */
   font-size: 11px;
   color: #1e40af;      /* 默认蓝色，会被内联样式覆盖 */
@@ -184,6 +193,7 @@ function dotColor(todo) {
   min-width: 0;
   box-sizing: border-box;
   overflow: hidden;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
 }
 
 /* 已完成的 Todo：灰色 + 删除线 */
@@ -208,6 +218,12 @@ function dotColor(todo) {
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+}
+
+.todo-chip-time {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 /* 超出条数提示 */

@@ -53,6 +53,7 @@
           :year="currentYear"
           :month="currentMonth"
           :selected-date="selectedDate"
+          :today-date="currentToday"
           :all-todos-by-date="allTodosByDate"
           @select-date="onSelectDate"
           @add-todo="onOpenAddModal"
@@ -60,6 +61,7 @@
         <WeekView
           v-else-if="currentView === 'week'"
           :selected-date="selectedDate"
+          :today-date="currentToday"
           :all-todos-by-date="allTodosByDate"
           @select-date="onSelectDate"
           @add-todo="onOpenAddModal"
@@ -137,7 +139,8 @@ import WeekView from '../components/Calendar/WeekView.vue'
 import TodoList from '../components/Todo/TodoList.vue'
 import TodoItem from '../components/Todo/TodoItem.vue'
 import TodoEditorModal from '../components/Todo/TodoEditorModal.vue'
-import { addDays, getMonthTitle, getWeekRangeTitle, nextMonth, prevMonth, today } from '../utils/dateUtils.js'
+import { addDays, chinaDateParts, getMonthTitle, getWeekRangeTitle, nextMonth, prevMonth, today } from '../utils/dateUtils.js'
+import { buildWeeklyRepeatDates } from '../utils/recurrence.js'
 import { useTodos } from '../composables/useTodos.js'
 import { getAllTodos } from '../services/todoService.js'
 
@@ -147,10 +150,11 @@ document.documentElement.dataset.mode = storedTheme
 document.body.dataset.mode = storedTheme
 
 const currentView = ref('month')
-const now = new Date()
-const currentYear = ref(now.getFullYear())
-const currentMonth = ref(now.getMonth())
+const now = chinaDateParts()
+const currentYear = ref(now.year)
+const currentMonth = ref(now.month)
 const selectedDate = ref(today())
+const currentToday = ref(selectedDate.value)
 const allTodosByDate = ref({})
 const showAddModal = ref(false)
 const modalDate = ref('')
@@ -158,6 +162,7 @@ const showSettingsTip = ref(false)
 const showWidgetTip = ref(false)
 const errorMsg = ref('')
 let errorTimer = null
+let todayTimer = null
 
 const { todos, loading, loadTodosByDate, addTodo, deleteTodo, toggleTodo } = useTodos()
 
@@ -174,6 +179,8 @@ const allTodosList = computed(() =>
     .sort((a, b) => {
       const dateCompare = String(a.date).localeCompare(String(b.date))
       if (dateCompare !== 0) return dateCompare
+      const timeCompare = String(a.start_time || '').localeCompare(String(b.start_time || ''))
+      if (timeCompare !== 0) return timeCompare
       return String(a.created_at || '').localeCompare(String(b.created_at || ''))
     })
 )
@@ -201,6 +208,15 @@ function setThemeMode(mode) {
   localStorage.setItem('theme-mode', mode)
   document.documentElement.dataset.mode = mode
   document.body.dataset.mode = mode
+  window.electronAPI?.setThemeMode?.(mode)
+}
+
+function refreshCurrentToday() {
+  const nextToday = today()
+  if (currentToday.value !== nextToday) {
+    currentToday.value = nextToday
+  }
+  return nextToday
 }
 
 async function loadAllTodosForMonth() {
@@ -245,10 +261,10 @@ function onNext() {
 }
 
 function onGoToday() {
-  const date = new Date()
-  currentYear.value = date.getFullYear()
-  currentMonth.value = date.getMonth()
-  onSelectDate(today())
+  const date = chinaDateParts()
+  currentYear.value = date.year
+  currentMonth.value = date.month
+  onSelectDate(refreshCurrentToday())
 }
 
 function onChangeView(view) {
@@ -262,11 +278,19 @@ function onOpenAddModal(dateStr) {
 
 async function onSaveTodo(todoData) {
   try {
-    await addTodo(todoData)
+    const repeatDates = buildWeeklyRepeatDates(todoData.recurrence)
+    const dates = repeatDates.length > 0 ? repeatDates : [todoData.date]
+    for (const date of dates) {
+      await addTodo({
+        ...todoData,
+        date,
+        recurrence: undefined
+      })
+    }
     showAddModal.value = false
     await loadAllTodosForMonth()
-    if (todoData.date !== selectedDate.value) {
-      onSelectDate(todoData.date)
+    if (dates[0] !== selectedDate.value) {
+      onSelectDate(dates[0])
     } else {
       await loadTodosByDate(selectedDate.value)
     }
@@ -314,12 +338,15 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  refreshCurrentToday()
+  todayTimer = setInterval(refreshCurrentToday, 60 * 1000)
   await loadAllTodosForMonth()
   window.addEventListener('keydown', onKeydown)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
+  clearInterval(todayTimer)
   clearTimeout(errorTimer)
 })
 
@@ -354,6 +381,7 @@ watch(selectedDate, (date) => {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-surface);
+  border-right: 1px solid var(--border-light);
 }
 
 .list-area {
@@ -433,6 +461,8 @@ watch(selectedDate, (date) => {
   width: 280px;
   flex-shrink: 0;
   overflow: hidden;
+  background: var(--bg-surface);
+  box-shadow: -8px 0 24px rgba(15, 23, 42, 0.04);
 }
 
 .tip-modal-overlay {

@@ -38,6 +38,14 @@ function initDatabase() {
     )
   `)
 
+  const columns = db.prepare('PRAGMA table_info(todos)').all().map(column => column.name)
+  if (!columns.includes('start_time')) {
+    db.prepare('ALTER TABLE todos ADD COLUMN start_time TEXT').run()
+  }
+  if (!columns.includes('end_time')) {
+    db.prepare('ALTER TABLE todos ADD COLUMN end_time TEXT').run()
+  }
+
   console.log('[DB] tables ready')
   return db
 }
