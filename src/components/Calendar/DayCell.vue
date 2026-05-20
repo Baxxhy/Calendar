@@ -12,6 +12,21 @@
     <!-- 日期数字 -->
     <div class="day-number">
       <span class="day-num-inner">{{ dayNumber }}</span>
+      <span
+        v-if="calendarInfo.badge"
+        class="day-status"
+        :class="calendarInfo.badgeType"
+      >
+        {{ calendarInfo.badge }}
+      </span>
+    </div>
+
+    <div
+      class="calendar-note"
+      :class="{ highlight: calendarInfo.label }"
+      :title="calendarInfo.label || calendarInfo.lunarText"
+    >
+      {{ calendarInfo.label || calendarInfo.lunarText }}
     </div>
 
     <!-- 当天 Todo 列表（直接显示在格子里） -->
@@ -39,6 +54,7 @@
 <script setup>
 import { computed } from 'vue'
 import { formatTimeRange } from '../../utils/todoTime.js'
+import { getCalendarInfo } from '../../utils/calendarInfo.js'
 
 /**
  * DayCell.vue - 月视图中的单个日期格子
@@ -63,6 +79,7 @@ const props = defineProps({
 defineEmits(['select', 'dblclick'])
 
 const dayNumber = computed(() => props.day.date.getDate())
+const calendarInfo = computed(() => getCalendarInfo(props.day.dateStr))
 
 // 最多显示3条，避免格子太满
 const visibleTodos = computed(() => props.todos.slice(0, 3))
@@ -155,11 +172,15 @@ function displayTitle(todo) {
 
 /* 日期数字 */
 .day-number {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .day-num-inner {
   display: inline-flex;
@@ -167,6 +188,45 @@ function displayTitle(todo) {
   justify-content: center;
   width: 26px;
   height: 26px;
+}
+
+.day-status {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.day-status.rest {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.day-status.work {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.calendar-note {
+  width: 100%;
+  min-height: 15px;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-note.highlight {
+  color: var(--priority-high);
+  font-weight: 700;
 }
 
 /* Todo 列表区域 */
