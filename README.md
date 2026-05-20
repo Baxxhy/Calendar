@@ -157,18 +157,3 @@ dist/                 前端构建产物，不提交
 dist-electron/        Electron 打包产物，不提交
 calendar.db           开发数据库，不提交
 ```
-
-## Git 忽略说明
-
-以下内容不会提交到仓库：
-
-- `node_modules/`
-- `dist/`
-- `dist-electron/`
-- `.electron-data/`
-- `.codex/`
-- `.kiro/`
-- `.vscode/`
-- `calendar.db`
-- `calendar.db-shm`
-- `calendar.db-wal`
