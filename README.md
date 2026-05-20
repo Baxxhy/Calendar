@@ -2,6 +2,20 @@
 
 一个基于 Electron + Vue 3 + SQLite 的 Windows 桌面日历与待办应用，支持主窗口和桌面小组件两种使用方式。
 
+## 截图预览
+
+### 月视图
+
+![月视图](docs/screenshots/month-view.png)
+
+### 周视图
+
+![周视图](docs/screenshots/week-view.png)
+
+### 添加待办
+
+![添加待办](docs/screenshots/add-todo-modal.png)
+
 ## 功能介绍
 
 - 月视图日历：按月展示日期，日期格子里直接显示当天待办。
