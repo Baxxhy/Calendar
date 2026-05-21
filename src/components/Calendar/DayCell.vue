@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="dayCellRef"
     class="day-cell"
     :class="{
       'other-month': !day.isCurrentMonth,
@@ -30,7 +31,10 @@
     </div>
 
     <!-- 当天 Todo 列表（直接显示在格子里） -->
-    <div class="todo-items" v-if="todos && todos.length > 0">
+    <div
+      class="todo-items"
+      v-if="todos && todos.length > 0"
+    >
       <div
         v-for="todo in visibleTodos"
         :key="todo.id"
@@ -44,15 +48,15 @@
         <span class="todo-chip-text">{{ todo.title }}</span>
       </div>
       <!-- 超出3条显示 +N -->
-      <div v-if="todos.length > 3" class="todo-more">
-        +{{ todos.length - 3 }} 项
+      <div v-if="hiddenTodoCount > 0" class="todo-more">
+        +{{ hiddenTodoCount }} 项
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { formatTimeRange } from '../../utils/todoTime.js'
 import { getCalendarInfo } from '../../utils/calendarInfo.js'
 
@@ -78,11 +82,16 @@ const props = defineProps({
 
 defineEmits(['select', 'dblclick'])
 
+const dayCellRef = ref(null)
+const maxVisibleTodos = ref(3)
+let resizeObserver = null
+
 const dayNumber = computed(() => props.day.date.getDate())
 const calendarInfo = computed(() => getCalendarInfo(props.day.dateStr))
 
-// 最多显示3条，避免格子太满
-const visibleTodos = computed(() => props.todos.slice(0, 3))
+// 根据格子剩余空间决定显示条数，标题始终保持单行省略。
+const visibleTodos = computed(() => props.todos.slice(0, maxVisibleTodos.value))
+const hiddenTodoCount = computed(() => Math.max(0, props.todos.length - visibleTodos.value.length))
 
 // 颜色映射表，与 TodoEditorModal 中的 colorOptions 保持一致
 const colorMap = {
@@ -114,6 +123,55 @@ function displayTitle(todo) {
   const time = formatTimeRange(todo)
   return time ? `${time} ${todo.title}` : todo.title
 }
+
+function updateVisibleTodoLimit() {
+  const cell = dayCellRef.value
+  if (!cell) return
+
+  const width = cell.clientWidth
+  const height = cell.clientHeight
+  const chipLineHeight = 19
+  const moreLineHeight = 17
+  const visibleLimit = width < 170 ? 1 : width < 240 ? 2 : 4
+  const total = props.todos.length
+
+  if (total === 0) {
+    maxVisibleTodos.value = 0
+    return
+  }
+
+  const reservedHeight = 72
+  const availableHeight = Math.max(0, height - reservedHeight)
+  const linesWithoutMore = Math.floor(availableHeight / chipLineHeight)
+  if (total <= linesWithoutMore) {
+    maxVisibleTodos.value = Math.min(total, visibleLimit)
+    return
+  }
+
+  const linesWithMore = Math.floor((availableHeight - moreLineHeight) / chipLineHeight)
+  const visibleCount = Math.min(linesWithMore, visibleLimit)
+  maxVisibleTodos.value = Math.max(1, visibleCount)
+}
+
+async function scheduleVisibleTodoLimitUpdate() {
+  await nextTick()
+  updateVisibleTodoLimit()
+}
+
+onMounted(() => {
+  resizeObserver = new ResizeObserver(updateVisibleTodoLimit)
+  if (dayCellRef.value) resizeObserver.observe(dayCellRef.value)
+  scheduleVisibleTodoLimitUpdate()
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+})
+
+watch(
+  () => [props.todos.length, calendarInfo.value.label, calendarInfo.value.lunarText, calendarInfo.value.badge],
+  scheduleVisibleTodoLimitUpdate
+)
 </script>
 
 <style scoped>
@@ -235,8 +293,12 @@ function displayTitle(todo) {
   flex-direction: column;
   gap: 2px;
   width: 100%;
+  flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
+  padding-bottom: 18px;
+  box-sizing: border-box;
 }
 
 /* 单条 Todo 标签 */
@@ -244,10 +306,12 @@ function displayTitle(todo) {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 0 0 17px;
   padding: 3px 6px;
   border-radius: 5px;
   background: #dbeafe; /* 默认蓝色，会被内联样式覆盖 */
   font-size: 11px;
+  line-height: 11px;
   color: #1e40af;      /* 默认蓝色，会被内联样式覆盖 */
   width: 100%;
   min-width: 0;
@@ -278,6 +342,7 @@ function displayTitle(todo) {
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  min-width: 0;
 }
 
 .todo-chip-time {
@@ -288,9 +353,23 @@ function displayTitle(todo) {
 
 /* 超出条数提示 */
 .todo-more {
+  position: absolute;
+  left: 12px;
+  bottom: 6px;
+  max-width: calc(100% - 24px);
   font-size: 11px;
+  line-height: 15px;
   color: var(--primary);
-  padding: 1px 5px;
+  padding: 0 5px;
   font-weight: 500;
+  border-radius: 4px;
+  background: var(--bg-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-cell.is-selected .todo-more {
+  background: var(--primary-light);
 }
 </style>

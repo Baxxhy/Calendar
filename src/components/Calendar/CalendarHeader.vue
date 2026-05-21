@@ -54,6 +54,16 @@
       <!-- 分隔线 -->
       <div class="divider"></div>
 
+      <button
+        v-if="currentView !== 'list'"
+        class="btn-detail"
+        :class="{ active: showDetail }"
+        @click="$emit('toggle-detail')"
+        :title="showDetail ? '隐藏右侧详情' : '显示右侧详情'"
+      >
+        详情
+      </button>
+
       <!-- 设置按钮 -->
       <button class="btn-icon" @click="$emit('open-settings')" title="设置 (Ctrl+,)">
         ⚙
@@ -91,10 +101,14 @@ defineProps({
   currentView: {
     type: String,
     default: 'month'
+  },
+  showDetail: {
+    type: Boolean,
+    default: true
   }
 })
 
-defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-widget'])
+defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-widget', 'toggle-detail'])
 </script>
 
 <style scoped>
@@ -211,6 +225,24 @@ defineEmits(['prev', 'next', 'go-today', 'change-view', 'open-settings', 'open-w
 }
 
 /* 图标按钮（设置、小组件） */
+.btn-detail {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition);
+}
+
+.btn-detail:hover,
+.btn-detail.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+
 .btn-icon {
   width: 34px;
   height: 34px;

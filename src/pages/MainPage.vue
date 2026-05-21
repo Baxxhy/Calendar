@@ -3,12 +3,14 @@
     <CalendarHeader
       :title="headerTitle"
       :current-view="currentView"
+      :show-detail="showMainDetail"
       @prev="onPrev"
       @next="onNext"
       @go-today="onGoToday"
       @change-view="onChangeView"
       @open-settings="showSettingsTip = true"
       @open-widget="showWidgetTip = true"
+      @toggle-detail="showMainDetail = !showMainDetail"
     />
 
     <div class="main-body">
@@ -68,7 +70,7 @@
         />
       </div>
 
-      <div class="sidebar">
+      <div v-if="currentView !== 'list' && showMainDetail" class="sidebar">
         <TodoList
           :todos="todos"
           :selected-date="selectedDate"
@@ -160,6 +162,7 @@ const showAddModal = ref(false)
 const modalDate = ref('')
 const showSettingsTip = ref(false)
 const showWidgetTip = ref(false)
+const showMainDetail = ref(localStorage.getItem('main-show-detail') !== 'false')
 const errorMsg = ref('')
 let errorTimer = null
 let todayTimer = null
@@ -357,6 +360,10 @@ watch([currentYear, currentMonth], () => {
 watch(selectedDate, (date) => {
   loadTodosByDate(date)
 }, { immediate: true })
+
+watch(showMainDetail, value => {
+  localStorage.setItem('main-show-detail', String(value))
+})
 </script>
 
 <style scoped>
